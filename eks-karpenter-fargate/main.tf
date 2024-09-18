@@ -1,12 +1,9 @@
-provider "aws" {
-  region = local.region
-}
+# Modified by AppThrust on Wed Sep 18 2024 13:29:31 GMT+0900
+# Original code from https://github.com/aws-ia/terraform-aws-eks-blueprints/blob/6409db6dc76943a000a7e055b3e0215e11aa0bbf/patterns/karpenter/main.tf
+# Licensed under Apache License 2.0.
 
-# This provider is required for ECR to authenticate with public repos. Please note ECR authentication requires us-east-1 as region hence its hardcoded below.
-# If your region is same as us-east-1 then you can just use one aws provider
 provider "aws" {
-  alias  = "ecr"
-  region = "us-east-1"
+  region = var.region
 }
 
 provider "kubernetes" {
@@ -35,10 +32,6 @@ provider "helm" {
   }
 }
 
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.ecr
-}
-
 data "aws_availability_zones" "available" {
   # Do not include local zones
   filter {
@@ -48,15 +41,12 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name   = "ex-${basename(path.cwd)}"
-  region = "us-west-2"
-
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+  name = try(var.name, basename(path.cwd))
 
   tags = {
-    Blueprint  = local.name
-    GithubRepo = "github.com/aws-ia/terraform-aws-eks-blueprints"
+    Module     = basename(path.cwd)
+    GithubRepo = "github.com/labthrust/terraform-aws"
   }
 }
 
@@ -151,11 +141,6 @@ module "eks_blueprints_addons" {
 
   enable_karpenter = true
 
-  karpenter = {
-    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-    repository_password = data.aws_ecrpublic_authorization_token.token.password
-  }
-
   karpenter_node = {
     # Use static name so that it matches what is defined in `karpenter.yaml` example manifest
     iam_role_use_name_prefix = false
@@ -180,11 +165,11 @@ module "vpc" {
   version = "~> 5.0"
 
   name = local.name
-  cidr = local.vpc_cidr
+  cidr = var.vpc_cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 48)]
 
   enable_nat_gateway = true
   single_nat_gateway = true
