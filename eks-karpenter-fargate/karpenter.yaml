@@ -1,3 +1,6 @@
+# Modified by AppThrust on Wed Sep 18 2024 13:29:31 GMT+0900
+# Original code from https://github.com/aws-ia/terraform-aws-eks-blueprints/blob/6409db6dc76943a000a7e055b3e0215e11aa0bbf/patterns/karpenter/karpenter.yaml
+# Licensed under Apache License 2.0.
 ---
 apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
@@ -5,15 +8,15 @@ metadata:
   name: default
 spec:
   amiFamily: AL2
-  role: karpenter-ex-karpenter
+  role: karpenter-eks-karpenter-fargate
   subnetSelectorTerms:
     - tags:
-        karpenter.sh/discovery: ex-karpenter
+        karpenter.sh/discovery: eks-karpenter-fargate
   securityGroupSelectorTerms:
     - tags:
-        karpenter.sh/discovery: ex-karpenter
+        karpenter.sh/discovery: eks-karpenter-fargate
   tags:
-    karpenter.sh/discovery: ex-karpenter
+    karpenter.sh/discovery: eks-karpenter-fargate
 ---
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
