@@ -3,7 +3,7 @@
 # Licensed under Apache License 2.0.
 
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.5"
 
   required_providers {
     aws = {
